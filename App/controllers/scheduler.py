@@ -1,22 +1,29 @@
 from App.models import Staff, Shift
-from App.controllers.user import get_user
-from App.strategies.evendistribution import EvenDistribution
-from App.strategies.balancedaynight import BalanceDayNight
-from App.strategies.minimizedays import MinimizeDays
 
-STRATEGIES = { "even": EvenDistribution, "balance_day_night": BalanceDayNight, "minimize_days": MinimizeDays }
+from App.strategies.schedule_generator import ScheduleGenerator
+from App.strategies.evendistribution import EvenDistributionStrategy
+from App.strategies.balancedaynight import BalanceDayNightStrategy
+from App.strategies.minimizedays import MinimizeDaysStrategy
 
-def auto_generate_schedule(admin_id, strategy_name="even"):
-    admin = get_user(admin_id)
-    if admin.role != "admin":
-        raise PermissionError("Only admins can generate schedules")
-    
-    strategy_class = STRATEGIES.get(strategy_name)
-    if not strategy_class:
-        raise ValueError(f"Invalid strategy '{strategy_name}'. Valid strategies are: {list(STRATEGIES.keys())}")
-    
-    strategy = strategy_class()
+
+
+
+def auto_generate_schedule(strategy_name="even", week_start=None):
     staff_list = Staff.query.all()
-    shifts = Shift.query.all()
 
-    return strategy.distribute_shifts(staff_list, shifts)
+    if not staff_list:
+        raise ValueError("No staff members available for scheduling")
+    
+    generator = ScheduleGenerator()
+    generator.setStaffList(staff_list)
+
+    if strategy_name == "even":
+        generator.setStrategy(EvenDistributionStrategy())
+    elif strategy_name == "balance_day_night":
+        generator.setStrategy(BalanceDayNightStrategy())
+    elif strategy_name == "minimize_days":
+        generator.setStrategy(MinimizeDaysStrategy())
+    else:
+        raise ValueError(f"Unknown strategy name: {strategy_name}")
+    
+    return generator.generateSchedule(week_start)
