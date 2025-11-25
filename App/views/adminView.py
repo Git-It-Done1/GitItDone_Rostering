@@ -2,6 +2,8 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime
 from App.controllers import staff, auth, admin
+from App.controllers.user import get_user
+from App.controllers.scheduler import auto_generate_schedule
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -27,8 +29,10 @@ def createSchedule():
     try:
         admin_id = get_jwt_identity()
         data = request.get_json()
-        scheduleName = data.get("scheduleName") # gets the scheduleName from the request body
-        schedule = admin.create_schedule(admin_id, scheduleName)  # Call controller method
+        week_start = data.get("week_start") # gets the start week from the request body
+        date_format = "%Y-%m-%d"
+        formatted_week_start = datetime.strptime(week_start, date_format)
+        schedule = admin.create_schedule(admin_id, formatted_week_start)  # Call controller method
         
         return jsonify(schedule.get_json()), 200 # Return the created schedule as JSON
     except (PermissionError, ValueError) as e:
@@ -75,3 +79,54 @@ def shiftReport():
         return jsonify({"error": str(e)}), 403
     except SQLAlchemyError:
         return jsonify({"error": "Database error"}), 500
+    
+def _generate_schedule_handler(schedule_type):
+    """Helper function to handle schedule generation"""
+    admin_id = get_jwt_identity()
+    admin = get_user(admin_id)
+    
+    if not admin:
+        return jsonify({"error": "User not found"}), 404
+    if admin.role != "admin":
+        return jsonify({"error": "Only admins can create schedules"}), 403
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Request body is required"}), 400
+            
+        week_start = data.get("week_start")
+        if not week_start:
+            return jsonify({"error": "week_start is required"}), 400
+        
+        date_format = "%Y-%m-%d"
+        formatted_week_start = datetime.strptime(week_start, date_format)
+        schedule = auto_generate_schedule(schedule_type, formatted_week_start)
+        
+        if not schedule:
+            return jsonify({"error": "Failed to generate schedule"}), 500
+        
+        return jsonify(schedule.get_json()), 200
+        
+    except ValueError as e:
+        return jsonify({"error": f"Invalid input: {str(e)}"}), 400
+    except SQLAlchemyError as e:
+        return jsonify({"error": "Database error"}), 500
+    except Exception as e:
+        return jsonify({"error": "An unexpected error occurred"}), 500
+
+
+@admin_view.route('/autoGenerateSchedule/even', methods=['POST'])
+@jwt_required()
+def autoGenerateEvenSchedule():
+    return _generate_schedule_handler("even")
+
+@admin_view.route('/autoGenerateSchedule/balanceDayNight', methods=['POST'])
+@jwt_required()
+def autoGenerateBalanceDayNightSchedule():
+    return _generate_schedule_handler("balance_day_night")
+
+@admin_view.route('/autoGenerateSchedule/minimizeDays', methods=['POST'])
+@jwt_required()
+def autoGenerateMinimizeDaysSchedule():
+    return _generate_schedule_handler("minimize_days")
