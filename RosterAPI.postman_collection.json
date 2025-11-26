@@ -194,7 +194,7 @@
 					"response": []
 				},
 				{
-					"name": "Admin: Auto-Generate Schedule (Even)",
+					"name": "Admin: Create Unassigned Shift",
 					"event": [
 						{
 							"listen": "test",
@@ -208,14 +208,87 @@
 									"    pm.expect(() => JSON.parse(pm.response.text())).not.to.throw();\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Response contains schedule object\", function () {\r",
+									"pm.test(\"Response contains shift object\", function () {\r",
 									"    const json = pm.response.json();\r",
 									"\r",
 									"    pm.expect(json).to.be.an(\"object\");\r",
+									"    pm.expect(json).to.have.property(\"clock_in\");\r",
+									"    pm.expect(json).to.have.property(\"clock_out\");\r",
+									"    pm.expect(json).to.have.property(\"end_time\");\r",
 									"    pm.expect(json).to.have.property(\"id\");\r",
-									"    pm.expect(json).to.have.property(\"shifts\");\r",
-									"    pm.expect(json).to.have.property(\"weekStart\");\r",
+									"    pm.expect(json).to.have.property(\"schedule_id\");\r",
+									"    pm.expect(json).to.have.property(\"staff_id\");\r",
+									"    pm.expect(json).to.have.property(\"staff_name\");\r",
+									"    pm.expect(json).to.have.property(\"start_time\");\r",
 									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"start_time\": \"2025-11-26T09:00:00\",\r\n    \"end_time\": \"2025-11-26T17:00:00\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/createUnassignedShift",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"createUnassignedShift"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Admin: Auto-Generate Schedule (Even)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {\r",
+									"    pm.test(\"Response body is valid JSON\", function () {\r",
+									"        pm.expect(() => JSON.parse(pm.response.text())).not.to.throw();\r",
+									"    });\r",
+									"    \r",
+									"    pm.test(\"Response contains schedule object\", function () {\r",
+									"        const json = pm.response.json();\r",
+									"        pm.expect(json).to.be.an(\"object\");\r",
+									"        pm.expect(json).to.have.property(\"id\");\r",
+									"        pm.expect(json).to.have.property(\"shifts\");\r",
+									"        pm.expect(json).to.have.property(\"weekStart\");\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"if (pm.response.code === 400) {\r",
+									"   pm.test(\"Correct error message\", function(){\r",
+									"        const json = pm.response.json();\r",
+									"        pm.expect(json.error).to.eql(\"Invalid input: No unassigned shifts available for scheduling\");\r",
+									"    });\r",
+									"}"
 								],
 								"type": "text/javascript",
 								"packages": {},
@@ -265,22 +338,26 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 200\", function(){\r",
-									"    pm.response.to.have.status(200);\r",
-									"});\r",
+									"if (pm.response.code === 200) {\r",
+									"    pm.test(\"Response body is valid JSON\", function () {\r",
+									"        pm.expect(() => JSON.parse(pm.response.text())).not.to.throw();\r",
+									"    });\r",
+									"    \r",
+									"    pm.test(\"Response contains schedule object\", function () {\r",
+									"        const json = pm.response.json();\r",
+									"        pm.expect(json).to.be.an(\"object\");\r",
+									"        pm.expect(json).to.have.property(\"id\");\r",
+									"        pm.expect(json).to.have.property(\"shifts\");\r",
+									"        pm.expect(json).to.have.property(\"weekStart\");\r",
+									"    });\r",
+									"}\r",
 									"\r",
-									"pm.test(\"Response body is valid JSON\", function () {\r",
-									"    pm.expect(() => JSON.parse(pm.response.text())).not.to.throw();\r",
-									"});\r",
-									"\r",
-									"pm.test(\"Response contains schedule object\", function () {\r",
-									"    const json = pm.response.json();\r",
-									"\r",
-									"    pm.expect(json).to.be.an(\"object\");\r",
-									"    pm.expect(json).to.have.property(\"id\");\r",
-									"    pm.expect(json).to.have.property(\"shifts\");\r",
-									"    pm.expect(json).to.have.property(\"weekStart\");\r",
-									"});"
+									"if (pm.response.code === 400) {\r",
+									"   pm.test(\"Correct error message\", function(){\r",
+									"        const json = pm.response.json();\r",
+									"        pm.expect(json.error).to.eql(\"Invalid input: No unassigned shifts available for scheduling\");\r",
+									"    });\r",
+									"}"
 								],
 								"type": "text/javascript",
 								"packages": {},
@@ -330,22 +407,26 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 200\", function(){\r",
-									"    pm.response.to.have.status(200);\r",
-									"});\r",
+									"if (pm.response.code === 200) {\r",
+									"    pm.test(\"Response body is valid JSON\", function () {\r",
+									"        pm.expect(() => JSON.parse(pm.response.text())).not.to.throw();\r",
+									"    });\r",
+									"    \r",
+									"    pm.test(\"Response contains schedule object\", function () {\r",
+									"        const json = pm.response.json();\r",
+									"        pm.expect(json).to.be.an(\"object\");\r",
+									"        pm.expect(json).to.have.property(\"id\");\r",
+									"        pm.expect(json).to.have.property(\"shifts\");\r",
+									"        pm.expect(json).to.have.property(\"weekStart\");\r",
+									"    });\r",
+									"}\r",
 									"\r",
-									"pm.test(\"Response body is valid JSON\", function () {\r",
-									"    pm.expect(() => JSON.parse(pm.response.text())).not.to.throw();\r",
-									"});\r",
-									"\r",
-									"pm.test(\"Response contains schedule object\", function () {\r",
-									"    const json = pm.response.json();\r",
-									"\r",
-									"    pm.expect(json).to.be.an(\"object\");\r",
-									"    pm.expect(json).to.have.property(\"id\");\r",
-									"    pm.expect(json).to.have.property(\"shifts\");\r",
-									"    pm.expect(json).to.have.property(\"weekStart\");\r",
-									"});"
+									"if (pm.response.code === 400) {\r",
+									"   pm.test(\"Correct error message\", function(){\r",
+									"        const json = pm.response.json();\r",
+									"        pm.expect(json.error).to.eql(\"Invalid input: No unassigned shifts available for scheduling\");\r",
+									"    });\r",
+									"}"
 								],
 								"type": "text/javascript",
 								"packages": {},

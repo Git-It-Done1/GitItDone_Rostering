@@ -4,6 +4,7 @@ from datetime import datetime
 from App.controllers import staff, auth, admin
 from App.controllers.user import get_user
 from App.controllers.scheduler import auto_generate_schedule
+from App.controllers.admin import create_unassigned_shift
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -61,6 +62,38 @@ def createShift():
 
         shift = admin.schedule_shift(admin_id, staffID, scheduleID, start_time, end_time)  # Call controller method
         print("Debug: Created shift in view:", shift.get_json())
+        
+        return jsonify(shift.get_json()), 200 # Return the created shift as JSON
+    except (PermissionError, ValueError) as e:
+        return jsonify({"error": str(e)}), 403
+    except SQLAlchemyError:
+        return jsonify({"error": "Database error"}), 500
+    
+@admin_view.route('/createUnassignedShift', methods=['POST'])
+@jwt_required()
+def createUnassignedShift():
+    admin_id = get_jwt_identity()
+    admin = get_user(admin_id)
+    
+    if not admin:
+        return jsonify({"error": "User not found"}), 404
+    if admin.role != "admin":
+        return jsonify({"error": "Only admins can create schedules"}), 403
+    
+    try:
+        data = request.get_json()
+        startTime = data.get("start_time") # gets the startTime from the request body
+        endTime = data.get("end_time") # gets the endTime from the request body
+
+        # Try ISO first, fallback to "YYYY-MM-DD HH:MM:SS"
+        try:
+            start_time = datetime.fromisoformat(startTime)
+            end_time = datetime.fromisoformat(endTime)
+        except ValueError:
+            start_time = datetime.strptime(startTime, "%Y-%m-%d %H:%M:%S")
+            end_time = datetime.strptime(endTime, "%Y-%m-%d %H:%M:%S")
+
+        shift = create_unassigned_shift(start_time, end_time)  # Call controller method
         
         return jsonify(shift.get_json()), 200 # Return the created shift as JSON
     except (PermissionError, ValueError) as e:
