@@ -11,22 +11,10 @@ services:
   startCommand: "gunicorn wsgi:app"
   envVars:
   - fromGroup: flask-postgres-api-settings
-  - key: POSTGRES_URL
+  - key: FLASK_SQLALCHEMY_DATABASE_URI
     fromDatabase:
       name: flask-postgres-api-db
-      property: host
-  - key: POSTGRES_USER
-    fromDatabase:
-      name: flask-postgres-api-db
-      property: user
-  - key: POSTGRES_PASSWORD
-    fromDatabase:
-      name: flask-postgres-api-db
-      property: password
-  - key: POSTGRES_DB
-    fromDatabase:
-      name: flask-postgres-api-db
-      property: database 
+      property: connectionString 
 
 envVarGroups:
 - name: flask-postgres-api-settings
@@ -39,5 +27,5 @@ envVarGroups:
 
 databases:
 - name: flask-postgres-api-db
-  plan: free
+  plan: freewould
   databaseName: mydb
