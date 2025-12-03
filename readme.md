@@ -1,7 +1,8 @@
-![Tests](https://github.com/uwidcit/flaskmvc/actions/workflows/dev.yml/badge.svg)
-
-# Flask MVC Template
-A template for flask applications structured in the Model View Controller pattern [Demo](https://dcit-flaskmvc.herokuapp.com/). [Postman Collection](https://documenter.getpostman.com/view/583570/2s83zcTnEJ)
+# RosteringAppCLI - Git It Done 
+A Staff rostering application with role-based access control, shift scheduling algorithms using the Strategy Design Pattern
+[Demo](https://flask-postgres-api-dp0x.onrender.com
+). 
+[Postman Collection](https://documenter.getpostman.com/view/49511481/2sB3dJzsAn )
 
 
 # Dependencies
@@ -104,77 +105,58 @@ This creates 4 users id 1 is the admin, id 2 and 3 are staff and 4 is a user
 ```bash
 $ flask init
 ```
-# User Management
 
-Create Users
-
-After flask type user create then add the username, the password and the role of the user (either admin, staff or user)
-
+# Auth Commands
 ```bash
-flask user create admin1 adminpass admin
-```
-List users
-```bash
-flask user list string
-flask user list json
-```
-# Managing shifts
-
-To Schedule shifts (Admin only)
-
-After flask type shift  schedule the staff id, the schedule idand the start and end of the shift in the ISO 8601 DateTime with time format( can copy the formant below and edit it)
-
-```bash
-flask shift schedule 2 1 2025-10-01T09:00:00 2025-10-01T17:00:00
-```
-View Roster (Staff only)
-
-After flask type shift roster to for the logged in staff
-
-```bash
-flask shift roster 
-```
-Clockin and Clockout(Staff only)
-
-After flask type shift clockin or clockoutand the shift id
-
-```bash
-flask shift clockin 1
-flask shift clockout 1
+flask auth login [username] [password]     - Login and get JWT token
+flask auth logout [username]               - Logout a user
 ```
 
-Shift Report (Admin only)
-
-After flask  type shift report 
-
+# Staff Commands
 ```bash
-flask shift report 
+flask staff roster                         - View combined roster (logged in staff only)
+flask staff clock_in [shiftID]             - Clock into shift at current time
+flask staff clock_out [shiftID]            - Clock out of shift at current time
+flask staff view_shift [shiftID]           - View specific shift details
 ```
 
-# Managing schedule
-
-Create Schedule(Admin only)
-
-After flask type schedule, create and the title 
-
+# Admin Commands
+## User Management
 ```bash
-flask schedule create "April Week 2" 
+flask admin create_user [username] [password] [role]    - Create a user (admin/staff/user)
+flask admin list_users                                  - List all users in database
+flask admin get_user [userID]                           - View specific user details
 ```
 
-List All Schedules(Admin only)
-
-After flask  type schedule  list 
-
+## Schedule Management
 ```bash
-flask schedule list 
+flask admin create_schedule [week_start]                - Create a new schedule (YYYY-MM-DD)
+flask admin list_schedules                              - List all schedules
+flask admin view_schedule [scheduleID]                  - View schedule and its shifts
 ```
-View a Schedule (Admin only)
 
-After flask type schedule view and the schedule id 
-
+## Shift Management
 ```bash
-flask schedule view 1 
+flask admin create_shift [staffID] [scheduleID] [start_time] [end_time]  - Schedule a shift (YYYY-MM-DD HH:MM:SS)
+flask admin create_unassigned_shift [start_time] [end_time]              - Create shift without staff (YYYY-MM-DD HH:MM:SS)
+flask admin shift_report                                                - View full shift report
+flask admin roster_report [staffID]                                     - View individual staff report
 ```
+
+## Auto-Scheduling
+strategies: even, minimize, daynight
+```bash
+flask admin auto_schedule [scheduleID] [strategy] [staffIDs]  - Auto-schedule shifts
+```
+
+# Shift Commands
+```bash
+flask shifts all                        - View all shifts in roster
+flask shifts from [fromDate] [toDate]   - View shifts from date to date (YYYY-MM-DD)
+flask shifts individual [staffID]       - View shift assignments for specific staff
+flask shifts upcoming                   - View upcoming shifts
+```
+
 
 # Database Migrations
 If changes to the models are made, the database must be'migrated' so that it can be synced with the new models.
