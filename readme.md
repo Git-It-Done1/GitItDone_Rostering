@@ -1,5 +1,5 @@
 # RosteringAppCLI - Git It Done 
-A Staff rostering application with role-based access control, shift scheduling algorithms using the Strtegy Design Pattern
+A Staff rostering application with role-based access control, shift scheduling algorithms using the Strategy Design Pattern
 [Demo](https://flask-postgres-api-dp0x.onrender.com
 ). 
 [Postman Collection](https://documenter.getpostman.com/view/49511481/2sB3dJzsAn )
